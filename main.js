@@ -123,6 +123,7 @@ function getType(code, pointer, state) {
 function interpret(code, pointer, state, exec = false) {
   let localState = {}
   while (pointer < code.length) {
+    let functions = false
     if (code[pointer].type == "string") {
       if ((code[pointer + 1].type || dummy_token.type) == "operator") {
         console.log("String has operator:")
@@ -131,19 +132,20 @@ function interpret(code, pointer, state, exec = false) {
           console.log(code[pointer].value)
           if (code[pointer + 2].type == 'string') {
             code.splice(pointer,3,{type: 'string', value:code[pointer].value+code[pointer+2].value})
+            functions = true
             console.log(code)
             if (!exec) {console.log('ERROR');return [code,pointer,state]}
           }
         } else if (code[pointer + 1].value == '+') {console.log('invalid operator; skipping');pointer++}
-      } else {console.log('invalid strfollows; skipping');pointer++}
+      }
     } else if (code[pointer].type == "object") {
       if ("+".includes(code[pointer + 1].value)) {}
-      
-    } else {console.log('invalid type; skipping');pointer++}
+    }
     console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
     console.log(pointer)
   }
   return [code, state, pointer]
+  
 }
 
 function getValue(code, state, pointer, offset, expectedTypes) {
@@ -176,5 +178,3 @@ function evaluate(code, state) {
   }
   return localState
 }
-
-//f=(s,e,d)=>{for(i=s;i<=e;i++){console.log(d.map(_=>_(i)).join('')||i)}};f(1,100,[i=>i%3?'':'Fizz',i=>i%5?'':'Buzz'])
