@@ -1,3 +1,4 @@
+const { subscribe } = require('node:diagnostics_channel');
 const fs = require('node:fs');
 
 const operators = [
@@ -39,6 +40,21 @@ try {
   console.error(err);
 }
 
+function bracketMatch(bracket1, bracket2){
+  if (bracket1 == '{' && bracket2 == '}') {
+    return true
+  }
+  if (bracket1 == '(' && bracket2 == ')') {
+    return true
+  }
+  if (bracket1 == '[' && bracket2 == ']') {
+    return true
+  }
+  console.log("Brackets Error!")
+  console.log(bracket1)
+  console.log(bracket2)
+  }
+
 function parse(code) {
   code = code + " "
   let tokens = []
@@ -50,8 +66,17 @@ function parse(code) {
     if (depth > 0) {
       subString += chr
     } else {
-      if (subString) {
-        tokens.push({ type: 'nested_expression', value: parse(subString.slice(0, -1)) });
+      if (subString) { 
+        if (!bracketMatch(subString.charAt(0),subString.charAt(subString.length-1))) {
+          console.error("mismatched brackets in object"+subString)
+          process.exit(-1)
+        }
+        if (subString.charAt(0) == "(") {
+          tokens.push({ type: 'expression', value: parse(subString.slice(1, -1))})}
+        if (subString.charAt(0) == "{") {
+          tokens.push({ type: 'block', value: parse(subString.slice(1, -1))})}
+        if (subString.charAt(0) == "[") {
+          tokens.push({ type: 'static', value: parse(subString.slice(1, -1))})}
         //console.log(subString.slice(0,-1))
         subString = ''
       }
@@ -77,6 +102,7 @@ function parse(code) {
     } else {
       if ("({[".includes(chr)) {
         depth += 1
+        subString+=chr
       } else if (")}]".includes(chr)) {
         depth -= 1
       }
