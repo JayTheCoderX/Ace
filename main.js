@@ -135,7 +135,6 @@ function interpret(code, pointer, state, exec = false) {
             code.splice(pointer,3,{type: 'string', value:code[pointer].value+code[pointer+2].value})
             functions = true
             console.log(code)
-            if (!exec) {console.log('ERROR');return [code,pointer,state]}
           }
         }
       }
@@ -143,7 +142,7 @@ function interpret(code, pointer, state, exec = false) {
       if ("+".includes(code[pointer + 1].value)) {}
     }
     if (!functions) {
-      pointer++
+      if (exec){pointer++} else {return [code,pointer,state]}
     }
     console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
     console.log(pointer)
