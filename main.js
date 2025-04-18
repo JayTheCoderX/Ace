@@ -122,8 +122,9 @@ function getType(code, pointer, state) {
 
 function interpret(code, pointer, state, exec = false) {
   let localState = {}
+  let functions = false
   while (pointer < code.length) {
-    let functions = false
+    functions = false
     if (code[pointer].type == "string") {
       if ((code[pointer + 1].type || dummy_token.type) == "operator") {
         console.log("String has operator:")
@@ -140,6 +141,9 @@ function interpret(code, pointer, state, exec = false) {
       }
     } else if (code[pointer].type == "object") {
       if ("+".includes(code[pointer + 1].value)) {}
+    }
+    if (!functions) {
+      pointer++
     }
     console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
     console.log(pointer)
