@@ -162,6 +162,8 @@ function interpret(code, pointer, state, exec = false) {
         console.log("String has operator:")
         console.log(code[pointer + 1] || dummy_token.type)
         if (code[pointer + 1].value == '+') {
+          console.log("Branching from "+JSON.stringify(code[pointer+2], null, 2))
+          [code] = interpret(code,pointer+2)
           console.log(code[pointer].value)
           if (code[pointer + 2].type == 'string') {
             code.splice(pointer,3,{type: 'string', value:code[pointer].value+code[pointer+2].value})
@@ -178,6 +180,10 @@ function interpret(code, pointer, state, exec = false) {
           console.log(localState)
         } 
       }
+      //if (['+='].includes(code[pointer + 1].value)) {}
+    } else if (code[pointer].type == "expression") {
+      [tmp] = interpret(code[pointer].value)
+      code[pointer] = tmp[-1]
       //if (['+='].includes(code[pointer + 1].value)) {}
     }
     if (!functions) {
