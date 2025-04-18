@@ -136,7 +136,7 @@ function interpret(code, pointer, state, exec = false) {
             console.log(code)
             if (!exec) {console.log('ERROR');return [code,pointer,state]}
           }
-        } else if (code[pointer + 1].value == '+') {console.log('invalid operator; skipping');pointer++}
+        }
       }
     } else if (code[pointer].type == "object") {
       if ("+".includes(code[pointer + 1].value)) {}
