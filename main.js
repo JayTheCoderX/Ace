@@ -19,6 +19,11 @@ const operators = [
   "+=",
   "\\",
   "/",
+  "++",
+  "+=",
+  "-=",
+  "/=",
+  "--"
 ].join('')
 
 const valid_namechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -35,7 +40,8 @@ try {
   console.log(JSON.stringify(parsed, null, 2))
   const [code, state, output] = interpret(parsed, 0, {}, exec=true)
   console.log("=== EXECUTION FINISHED ===")
-  console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
+  console.log("PrettyPrint code block state: " + JSON.stringify(code, null, 2))
+  console.log("PrettyPrint global state: " + JSON.stringify(state, null, 2))
 } catch (err) {
   console.error(err);
 }
@@ -165,15 +171,22 @@ function interpret(code, pointer, state, exec = false) {
         }
       }
     } else if (code[pointer].type == "object") {
-      if ("+".includes(code[pointer + 1].value)) {}
+      if ((code[pointer + 1] || dummy_token).type == "operator") {
+        if (code[pointer + 1].value == "=") {
+          localState[code[pointer].value] = code[pointer+2] 
+          console.log("Applying value to state")
+          console.log(localState)
+        } 
+      }
+      //if (['+='].includes(code[pointer + 1].value)) {}
     }
     if (!functions) {
-      if (exec){pointer++} else {return [code,pointer,state]}
+      if (exec){pointer++} else {return [code,localState,pointer]}
     }
     console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
     console.log(pointer)
   }
-  return [code, state, pointer]
+  return [code, localState, pointer]
   
 }
 
