@@ -1,0 +1,1 @@
+o+=({i+=1}*5\i+"this is \\ <these are two \'s a string three \'s>\\\" <that quote shouldn't terminate","the string .. that should>",cheese)

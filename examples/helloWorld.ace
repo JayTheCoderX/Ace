@@ -1,0 +1,5 @@
+"cheese"+"cheese"+"_man"
+hi = "hello"
+space = " "
+world = "world"
+print, string1+space+string2

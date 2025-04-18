@@ -28,7 +28,7 @@ const dummy_token = { type: 'nil', value: 'nil' }
 //const parsed = parse("cheese=value*2+cheese(5,bungle),(functions,(more_functions, functions)),(test),(test)")
 
 try {
-  const data = fs.readFileSync('syntaxtest.sl', 'utf8');
+  const data = fs.readFileSync('./examples/syntaxtest.ace', 'utf8');
   console.log(data);
   const parsed = parse(data);
   console.log(JSON.stringify(parsed, null, 2))
