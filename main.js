@@ -126,7 +126,7 @@ function interpret(code, pointer, state, exec = false) {
   while (pointer < code.length) {
     functions = false
     if (code[pointer].type == "string") {
-      if ((code[pointer + 1].type || dummy_token.type) == "operator") {
+      if ((code[pointer + 1] || dummy_token).type == "operator") {
         console.log("String has operator:")
         console.log(code[pointer + 1] || dummy_token.type)
         if (code[pointer + 1].value == '+') {
