@@ -38,7 +38,7 @@ try {
   console.log(data);
   const parsed = parse(data);
   console.log(JSON.stringify(parsed, null, 2))
-  const [code, state, output] = interpret(parsed, 0, {}, exec=true)
+  const [code, state, output] = interpret(parsed, 0, {}, exec = true)
   console.log("=== EXECUTION FINISHED ===")
   console.log("PrettyPrint code block state: " + JSON.stringify(code, null, 2))
   console.log("PrettyPrint global state: " + JSON.stringify(state, null, 2))
@@ -46,7 +46,7 @@ try {
   console.error(err);
 }
 
-function bracketMatch(bracket1, bracket2){
+function bracketMatch(bracket1, bracket2) {
   if (bracket1 == '{' && bracket2 == '}') {
     return true
   }
@@ -59,7 +59,7 @@ function bracketMatch(bracket1, bracket2){
   console.log("Brackets Error!")
   console.log(bracket1)
   console.log(bracket2)
-  }
+}
 
 function parse(code) {
   code = code + " "
@@ -72,17 +72,20 @@ function parse(code) {
     if (depth > 0) {
       subString += chr
     } else {
-      if (subString) { 
-        if (!bracketMatch(subString.charAt(0),subString.charAt(subString.length-1))) {
-          console.error("mismatched brackets in object"+subString)
+      if (subString) {
+        if (!bracketMatch(subString.charAt(0), subString.charAt(subString.length - 1))) {
+          console.error("mismatched brackets in object" + subString)
           process.exit(-1)
         }
         if (subString.charAt(0) == "(") {
-          tokens.push({ type: 'expression', value: parse(subString.slice(1, -1))})}
+          tokens.push({ type: 'expression', value: parse(subString.slice(1, -1)) })
+        }
         if (subString.charAt(0) == "{") {
-          tokens.push({ type: 'block', value: parse(subString.slice(1, -1))})}
+          tokens.push({ type: 'block', value: parse(subString.slice(1, -1)) })
+        }
         if (subString.charAt(0) == "[") {
-          tokens.push({ type: 'static', value: parse(subString.slice(1, -1))})}
+          tokens.push({ type: 'static', value: parse(subString.slice(1, -1)) })
+        }
         //console.log(subString.slice(0,-1))
         subString = ''
       }
@@ -91,7 +94,7 @@ function parse(code) {
       context = tokens[tokens.length - 1]
       if (context.quote == chr) {
         console.log(context.value.charAt(context.value.length - 1))
-        offset = 0
+        let offset = 0
         if (context.value.charAt(context.value.length - 1) == '\\') {
           console.log("WHEEE")
           offset = 1
@@ -108,7 +111,7 @@ function parse(code) {
     } else {
       if ("({[".includes(chr)) {
         depth += 1
-        subString+=chr
+        subString += chr
       } else if (")}]".includes(chr)) {
         depth -= 1
       }
@@ -147,7 +150,7 @@ function parse(code) {
 function getType(code, pointer, state) {
   if ((code[pointer] || dummy_token).type) {
     if (code[pointer].type == object) {
-      
+
     }
   }
 }
@@ -162,11 +165,11 @@ function interpret(code, pointer, state, exec = false) {
         console.log("String has operator:")
         console.log(code[pointer + 1] || dummy_token.type)
         if (code[pointer + 1].value == '+') {
-          console.log("Branching from "+JSON.stringify(code[pointer+2], null, 2))
-          [code] = interpret(code,pointer+2)
+          console.log("Branching from " + JSON.stringify(code[pointer + 2], null, 2))
+          [code] = interpret(code, pointer + 2)
           console.log(code[pointer].value)
           if (code[pointer + 2].type == 'string') {
-            code.splice(pointer,3,{type: 'string', value:code[pointer].value+code[pointer+2].value})
+            code.splice(pointer, 3, { type: 'string', value: code[pointer].value + code[pointer + 2].value })
             functions = true
             console.log(code)
           }
@@ -175,25 +178,25 @@ function interpret(code, pointer, state, exec = false) {
     } else if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
-          localState[code[pointer].value] = code[pointer+2] 
+          localState[code[pointer].value] = code[pointer + 2]
           console.log("Applying value to state")
           console.log(localState)
-        } 
+        }
       }
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
-      [tmp] = interpret(code[pointer].value)
-      code[pointer] = tmp[-1]
+      let [tmp] = interpret(code[pointer].value)
+      //code[pointer] = tmp[-1]
       //if (['+='].includes(code[pointer + 1].value)) {}
     }
     if (!functions) {
-      if (exec){pointer++} else {return [code,localState,pointer]}
+      if (exec) { pointer++ } else { return [code, localState, pointer] }
     }
     console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
     console.log(pointer)
   }
   return [code, localState, pointer]
-  
+
 }
 
 function getValue(code, state, pointer, offset, expectedTypes) {
