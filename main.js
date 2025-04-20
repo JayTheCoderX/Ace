@@ -163,15 +163,22 @@ function interpret(code, pointer, state, exec = false) {
   let functions = false
   while (pointer < code.length) {
     functions = false
+    if (!code[pointer]) {
+      console.log(code[pointer])
+      console.log(code[pointer])
+    }
     if (code[pointer].type == "string") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         console.log("String has operator:")
         console.log(code[pointer + 1] || dummy_token.type)
         if (code[pointer + 1].value == '+') {
           console.log("Branching from " + JSON.stringify(code[pointer + 2], null, 2))
-          [code] = interpret(code, pointer + 2)
+          let [tmp] = interpret(code, pointer + 2)
+          console.clear()
+          console.log("Recursive parameter state reuturnval: " + JSON.stringify(code, null, 2))
+          code = tmp
           console.log(code[pointer].value)
-          if (code[pointer + 2].type == 'string') {
+          if ((code[pointer + 2] || dummy_token).type == 'string') {
             code.splice(pointer, 3, { type: 'string', value: code[pointer].value + code[pointer + 2].value })
             functions = true
             console.log(code)
@@ -188,7 +195,10 @@ function interpret(code, pointer, state, exec = false) {
       }
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
-      let [tmp] = interpret(code[pointer].value)
+      let [tmp] = interpret(code[pointer].value, exec=true)
+      console.log(tmp)
+      code[pointer] = tmp[0] || dummy_token
+
       //code[pointer] = tmp[-1]
       //if (['+='].includes(code[pointer + 1].value)) {}
     }
