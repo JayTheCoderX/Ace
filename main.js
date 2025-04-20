@@ -24,7 +24,7 @@ const operators = [
   "-=",
   "/=",
   "--"
-].join('')
+]
 
 const valid_namechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const valid_numbers = '0123456789.'
@@ -37,6 +37,7 @@ try {
   const data = fs.readFileSync('./examples/syntaxtest.ace', 'utf8');
   console.log(data);
   const parsed = parse(data);
+  console.log("PrettyPrint INIT: " + JSON.stringify(parsed, null, 2))
   console.log(JSON.stringify(parsed, null, 2))
   const [code, state, output] = interpret(parsed, 0, {}, exec = true)
   console.log("=== EXECUTION FINISHED ===")
@@ -115,7 +116,7 @@ function parse(code) {
       } else if (")}]".includes(chr)) {
         depth -= 1
       }
-      if (operators.includes(chr)) {
+      if (operators.includes(chr) && !depth) {
         if (((tokens[tokens.length - 1] || dummy_token).type == 'operator') && operators.includes((tokens[tokens.length - 1] || dummy_token).value + chr)) {
           tokens[tokens.length - 1].value += chr
         } else {
@@ -156,6 +157,8 @@ function getType(code, pointer, state) {
 }
 
 function interpret(code, pointer, state, exec = false) {
+  console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
+  console.log(pointer)
   let localState = {}
   let functions = false
   while (pointer < code.length) {
@@ -192,8 +195,7 @@ function interpret(code, pointer, state, exec = false) {
     if (!functions) {
       if (exec) { pointer++ } else { return [code, localState, pointer] }
     }
-    console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
-    console.log(pointer)
+
   }
   return [code, localState, pointer]
 
