@@ -34,7 +34,7 @@ const dummy_token = { type: 'nil', value: 'nil' }
 //const parsed = parse("cheese=value*2+cheese(5,bungle),(functions,(more_functions, functions)),(test),(test)")
 
 try {
-  const data = fs.readFileSync('./examples/syntaxtest.ace', 'utf8');
+  const data = fs.readFileSync('./examples/objects.ace', 'utf8');
   console.log(data);
   const parsed = parse(data);
   console.log("PrettyPrint INIT: " + JSON.stringify(parsed, null, 2))
@@ -43,6 +43,7 @@ try {
   console.log("=== EXECUTION FINISHED ===")
   console.log("PrettyPrint code block state: " + JSON.stringify(code, null, 2))
   console.log("PrettyPrint global state: " + JSON.stringify(state, null, 2))
+  42
 } catch (err) {
   console.error(err);
 }
@@ -87,7 +88,6 @@ function parse(code) {
         if (subString.charAt(0) == "[") {
           tokens.push({ type: 'static', value: parse(subString.slice(1, -1)) })
         }
-        //console.log(subString.slice(0,-1))
         subString = ''
       }
     }
@@ -97,13 +97,11 @@ function parse(code) {
         console.log(context.value.charAt(context.value.length - 1))
         let offset = 0
         if (context.value.charAt(context.value.length - 1) == '\\') {
-          console.log("WHEEE")
           offset = 1
           while (context.value.charAt(context.value.length - offset) == '\\') {
             offset++
           }
           offset--
-          console.log(offset)
         }
         if (offset % 2 === 0) {
           quote = false; tokens[tokens.length - 1].value = tokens[tokens.length - 1].value.replace("\\\\", "\\")
@@ -138,7 +136,6 @@ function parse(code) {
         }
       }
       if (quotes.includes(chr) && !depth) {
-        console.log(chr)
         tokens.push({ type: 'string', value: "", quote: chr })
         quote = true
       }
@@ -163,12 +160,7 @@ function interpret(code, pointer, state, exec = false) {
   let functions = false
   while (pointer < code.length) {
     functions = false
-    if (!code[pointer]) {
-      console.log(code[pointer])
-      pointer++
-      continue
-      console.log(code[pointer])
-    }
+    // MARK: type handling
     if (code[pointer].type == "string") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         console.log("String has operator:")
@@ -186,23 +178,21 @@ function interpret(code, pointer, state, exec = false) {
     } else if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
-          [code] = interpret(code, pointer + 2)
+          let [tmp] = interpret(code, pointer + 2)
+          code = tmp
+          localState[code[pointer].value] = code[pointer+2]
+          code.splice(pointer, 3)
         }
       }
+    // MARK: expressions
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
-      let [tmp] = interpret(code[pointer].value, 0, exec=true)
-      console.log("RETURNVAL:")
-      console.log(tmp)
+      let [tmp] = interpret(code[pointer].value, 0, exec = true)
       code[pointer] = tmp[0] || dummy_token
-
-      //code[pointer] = tmp[-1]
-      //if (['+='].includes(code[pointer + 1].value)) {}
     }
     if (!functions) {
       if (exec) { pointer++ } else { return [code, localState, pointer] }
     }
-
   }
   return [code, localState, pointer]
 
