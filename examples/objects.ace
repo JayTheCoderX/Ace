@@ -1,1 +1,9 @@
-x="h"+"e"+"l"+"l"+"o"y="wo"+"r"+("l"+"d")
+o = "o"
+l = "l"
+l = l+l
+z = ((((l+"d"))))
+world = ("w"+o+"r"+(l+"d"))
+space = " "
+
+x="h"+"e"+l+"o"y=world
+string = x+space+y

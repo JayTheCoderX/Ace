@@ -156,7 +156,7 @@ function getType(code, pointer, state) {
 function interpret(code, pointer, state, exec = false) {
   console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
   console.log(pointer)
-  let localState = {}
+  let localState = state || {}
   let functions = false
   while (pointer < code.length) {
     functions = false
@@ -166,7 +166,7 @@ function interpret(code, pointer, state, exec = false) {
         console.log("String has operator:")
         console.log(code[pointer + 1] || dummy_token.type)
         if (code[pointer + 1].value == '+') {
-          [code] = interpret(code, pointer + 2)
+          [code] = interpret(code, pointer + 2, localState)
           console.log(code[pointer].value)
           if ((code[pointer + 2] || dummy_token).type == 'string') {
             code.splice(pointer, 3, { type: 'string', value: code[pointer].value + code[pointer + 2].value })
@@ -178,17 +178,19 @@ function interpret(code, pointer, state, exec = false) {
     } else if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
-          let [tmp] = interpret(code, pointer + 2)
+          let [tmp] = interpret(code, pointer + 2, localState)
           code = tmp
           localState[code[pointer].value] = code[pointer+2]
           code.splice(pointer, 3)
           functions = true
         }
       }
+      if (!functions) {code.splice(pointer, 1, localState[code[pointer].value] || dummy_token); functions=true}
     // MARK: expressions
+    40
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
-      let [tmp] = interpret(code[pointer].value, 0, exec = true)
+      let [tmp] = interpret(code[pointer].value, 0, localState)
       code[pointer] = tmp[0] || dummy_token
     }
     if (!functions) {
