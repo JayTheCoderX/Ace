@@ -174,11 +174,7 @@ function interpret(code, pointer, state, exec = false) {
         console.log("String has operator:")
         console.log(code[pointer + 1] || dummy_token.type)
         if (code[pointer + 1].value == '+') {
-          console.log("Branching from " + JSON.stringify(code[pointer + 2], null, 2))
-          let [tmp] = interpret(code, pointer + 2)
-          console.clear()
-          console.log("Recursive parameter state reuturnval: " + JSON.stringify(code, null, 2))
-          code = tmp
+          [code] = interpret(code, pointer + 2)
           console.log(code[pointer].value)
           if ((code[pointer + 2] || dummy_token).type == 'string') {
             code.splice(pointer, 3, { type: 'string', value: code[pointer].value + code[pointer + 2].value })
@@ -190,9 +186,7 @@ function interpret(code, pointer, state, exec = false) {
     } else if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
-          localState[code[pointer].value] = code[pointer + 2]
-          console.log("Applying value to state")
-          console.log(localState)
+          [code] = interpret(code, pointer + 2)
         }
       }
       //if (['+='].includes(code[pointer + 1].value)) {}
@@ -212,35 +206,4 @@ function interpret(code, pointer, state, exec = false) {
   }
   return [code, localState, pointer]
 
-}
-
-function getValue(code, state, pointer, offset, expectedTypes) {
-
-}
-
-function evaluate(code, state) {
-  let localState = {}
-  let pointer = 0
-  if (code.length == 1) {
-    return code[0]
-  } else if (code.length > 1) {
-    while (pointer < code.length) {
-      token = code[pointer]
-      switch (token.type) {
-        case "operator":
-          if (token.value === "=") {
-            if (code[pointer - 1].type === "object") {
-              (localState[code[pointer - 1].value]) = getValue(code, state, pointer)
-            }
-          }
-          pointer++
-          break
-        default:
-          pointer++
-      }
-    }
-  } else {
-    // hmmm
-  }
-  return localState
 }

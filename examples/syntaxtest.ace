@@ -1,5 +1,2 @@
-"h"+"e"+"l"+"l"+"o"+" "+"wo"+"rl"+"d",
-
-"this"+" "+("should"+" "+"be"+" "+"a")+"nother"+" "+"string"
-
-x = {this, should, have, things}
+x = "h"+"e"+"l"+"l"+"o"+(" ")+"wo"+"rl"+"d"
+y = "this"+" "+("should"+" "+"be"+" "+"a")+"nother"+" "+"string"
