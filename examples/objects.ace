@@ -1,8 +1,9 @@
 o = "o"
 l = "l"
-l = l+l
+
 z = ((((l+"d"))))
 world = ("w"+o+"r"+(l+"d"))
+l = l+l
 space = " "
 
 x="h"+"e"+l+"o"y=world

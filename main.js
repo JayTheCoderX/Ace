@@ -109,8 +109,8 @@ function parse(code) {
       } else { tokens[tokens.length - 1].value += chr }
     } else {
       if ("({[".includes(chr)) {
-        depth += 1
-        subString += chr
+        if (!depth) {subString += chr}
+        depth += 1        
       } else if (")}]".includes(chr)) {
         depth -= 1
       }
