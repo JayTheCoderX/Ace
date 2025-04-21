@@ -182,6 +182,7 @@ function interpret(code, pointer, state, exec = false) {
           code = tmp
           localState[code[pointer].value] = code[pointer+2]
           code.splice(pointer, 3)
+          functions = true
         }
       }
     // MARK: expressions
