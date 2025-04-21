@@ -198,9 +198,6 @@ function interpret(code, pointer, state, exec = false) {
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
       let [tmp] = interpret(code[pointer].value, 0, exec=true)
-      while (m=0,m<20,m++) {
-        [tmp] = interpret(tmp, 0, exec=true)
-      }
       console.log("RETURNVAL:")
       console.log(tmp)
       code[pointer] = tmp[0] || dummy_token
