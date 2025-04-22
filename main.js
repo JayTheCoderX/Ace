@@ -162,42 +162,31 @@ function interpret(code, pointer, state, exec = false) {
   while (pointer < code.length) {
     functions = false
     // MARK: type handling
-    if (code[pointer].type == "string") {
-      if ((code[pointer + 1] || dummy_token).type == "operator") {
-        console.log("String has operator:")
-        console.log(code[pointer + 1] || dummy_token.type)
-        if (code[pointer + 1].value == '+') {
-          [code] = interpret(code, pointer + 2, localState)
-          console.log(code[pointer].value)
-          if ((code[pointer + 2] || dummy_token).type == 'string') {
-            code.splice(pointer, 3, { type: 'string', value: code[pointer].value + code[pointer + 2].value })
-            functions = true
-            console.log(code)
-          }
-        }
-      }
-    } else if (code[pointer].type == "num") {
-      if ((code[pointer + 1] || dummy_token).type == "operator") {
-        [
-          {'op': '+', 'exec': (a,b) => a+b},
-          {'op': '*', 'exec': (a,b) => a*b},
-          {'op': '/', 'exec': (a,b) => a/b},
-          {'op': '%', 'exec': (a,b) => a%b},
-          {'op': '^', 'exec': (a,b) => a^b},
-        ].forEach(func => {
+    let pf = parseFloat
+    if ((code[pointer + 1] || dummy_token).type == "operator") {
+      [
+        { match: { a: 'string', b: 'string' }, op: '+', 'exec': (a, b) => a + b, type: 'string' },
+        { match: { a: 'num', b: 'num' }, 'op': '+', 'exec': (a, b) => pf(a) + pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '*', 'exec': (a, b) => pf(a) * pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '/', 'exec': (a, b) => pf(a) / pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '%', 'exec': (a, b) => pf(a) % pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '^', 'exec': (a, b) => pf(a) ^ pf(b), type: 'num' },
+      ].forEach(func => {
+        if (code[pointer].type == func.match.a && code[pointer+1]) {
           if (code[pointer + 1].value == func.op) {
             [code] = interpret(code, pointer + 2, localState)
             console.log(code[pointer].value)
-            if ((code[pointer + 2] || dummy_token).type == 'num') {
+            if ((code[pointer + 2] || dummy_token).type == func.match.b) {
               console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
-              code.splice(pointer, 3, { type: 'num', value: func.exec(parseFloat(code[pointer].value), parseFloat(code[pointer + 2].value)) })
+              code.splice(pointer, 3, { type: func.type, value: func.exec(parseFloat(code[pointer].value), parseFloat(code[pointer + 2].value)) })
               functions = true
               console.log(code[pointer].value)
             }
           }
-        })
-      }
-    } else if (code[pointer].type == "object") {
+        }
+      })
+    }
+    if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
           let [tmp] = interpret(code, pointer + 2, localState)
