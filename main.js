@@ -178,56 +178,24 @@ function interpret(code, pointer, state, exec = false) {
       }
     } else if (code[pointer].type == "num") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
-        if (code[pointer + 1].value == '+') {
-          [code] = interpret(code, pointer + 2, localState)
-          console.log(code[pointer].value)
-          if ((code[pointer + 2] || dummy_token).type == 'num') {
-            console.log("evaluating "+code[pointer].value+" + "+code[pointer + 2].value+" equals:" )
-            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) + parseFloat(code[pointer + 2].value) })
-            functions = true
-            console.log(code[pointer].value)  
+        [
+          {'op': '+', 'exec': (a,b) => a+b},
+          {'op': '*', 'exec': (a,b) => a*b},
+          {'op': '/', 'exec': (a,b) => a/b},
+          {'op': '%', 'exec': (a,b) => a%b},
+          {'op': '^', 'exec': (a,b) => a^b},
+        ].forEach(func => {
+          if (code[pointer + 1].value == func.op) {
+            [code] = interpret(code, pointer + 2, localState)
+            console.log(code[pointer].value)
+            if ((code[pointer + 2] || dummy_token).type == 'num') {
+              console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
+              code.splice(pointer, 3, { type: 'num', value: func.exec(parseFloat(code[pointer].value), parseFloat(code[pointer + 2].value)) })
+              functions = true
+              console.log(code[pointer].value)
+            }
           }
-        }
-        else if (code[pointer + 1].value == '*') {
-          [code] = interpret(code, pointer + 2, localState)
-          console.log(code[pointer].value)
-          if ((code[pointer + 2] || dummy_token).type == 'num') {
-            console.log("evaluating "+code[pointer].value+" * "+code[pointer + 2].value+" equals:" )
-            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) * parseFloat(code[pointer + 2].value) })
-            functions = true
-            console.log(code[pointer].value)  
-          }
-        }
-        else if (code[pointer + 1].value == '/') {
-          [code] = interpret(code, pointer + 2, localState)
-          console.log(code[pointer].value)
-          if ((code[pointer + 2] || dummy_token).type == 'num') {
-            console.log("evaluating "+code[pointer].value+" / "+code[pointer + 2].value+" equals:" )
-            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) / parseFloat(code[pointer + 2].value) })
-            functions = true
-            console.log(code[pointer].value)  
-          }
-        }
-        else if (code[pointer + 1].value == '-') {
-          [code] = interpret(code, pointer + 2, localState)
-          console.log(code[pointer].value)
-          if ((code[pointer + 2] || dummy_token).type == 'num') {
-            console.log("evaluating "+code[pointer].value+" - "+code[pointer + 2].value+" equals:" )
-            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) - parseFloat(code[pointer + 2].value) })
-            functions = true
-            console.log(code[pointer].value)  
-          }
-        }
-        else if (code[pointer + 1].value == '%') {
-          [code] = interpret(code, pointer + 2, localState)
-          console.log(code[pointer].value)
-          if ((code[pointer + 2] || dummy_token).type == 'num') {
-            console.log("evaluating "+code[pointer].value+" % "+code[pointer + 2].value+" equals:" )
-            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) % parseFloat(code[pointer + 2].value) })
-            functions = true
-            console.log(code[pointer].value)  
-          }
-        }
+        })
       }
     } else if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
