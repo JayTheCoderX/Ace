@@ -6,5 +6,9 @@ world = ("w"+o+"r"+(l+"d"))
 l = l+l
 space = " "
 
+numtest = 5*(826+100+70+4) "this should evaluate to 500"
+divtest = numtest/100 "this should evaluate to 50"
+floattest = (129.6299399 / 8.2525) / 5 "this should evaluate to approximate pi"
+
 x="h"+"e"+l+"o"y=world
 string = x+space+y

@@ -109,8 +109,8 @@ function parse(code) {
       } else { tokens[tokens.length - 1].value += chr }
     } else {
       if ("({[".includes(chr)) {
-        if (!depth) {subString += chr}
-        depth += 1        
+        if (!depth) { subString += chr }
+        depth += 1
       } else if (")}]".includes(chr)) {
         depth -= 1
       }
@@ -131,6 +131,7 @@ function parse(code) {
       if (valid_numbers.includes(chr) && !depth) {
         if ((tokens[tokens.length - 1] || dummy_token).type == 'num') {
           tokens[tokens.length - 1].value += chr
+          tokens[tokens.length - 1].value = tokens[tokens.length - 1].value
         } else {
           tokens.push({ type: 'num', value: chr })
         }
@@ -175,23 +176,77 @@ function interpret(code, pointer, state, exec = false) {
           }
         }
       }
+    } else if (code[pointer].type == "num") {
+      if ((code[pointer + 1] || dummy_token).type == "operator") {
+        if (code[pointer + 1].value == '+') {
+          [code] = interpret(code, pointer + 2, localState)
+          console.log(code[pointer].value)
+          if ((code[pointer + 2] || dummy_token).type == 'num') {
+            console.log("evaluating "+code[pointer].value+" + "+code[pointer + 2].value+" equals:" )
+            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) + parseFloat(code[pointer + 2].value) })
+            functions = true
+            console.log(code[pointer].value)  
+          }
+        }
+        else if (code[pointer + 1].value == '*') {
+          [code] = interpret(code, pointer + 2, localState)
+          console.log(code[pointer].value)
+          if ((code[pointer + 2] || dummy_token).type == 'num') {
+            console.log("evaluating "+code[pointer].value+" * "+code[pointer + 2].value+" equals:" )
+            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) * parseFloat(code[pointer + 2].value) })
+            functions = true
+            console.log(code[pointer].value)  
+          }
+        }
+        else if (code[pointer + 1].value == '/') {
+          [code] = interpret(code, pointer + 2, localState)
+          console.log(code[pointer].value)
+          if ((code[pointer + 2] || dummy_token).type == 'num') {
+            console.log("evaluating "+code[pointer].value+" / "+code[pointer + 2].value+" equals:" )
+            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) / parseFloat(code[pointer + 2].value) })
+            functions = true
+            console.log(code[pointer].value)  
+          }
+        }
+        else if (code[pointer + 1].value == '-') {
+          [code] = interpret(code, pointer + 2, localState)
+          console.log(code[pointer].value)
+          if ((code[pointer + 2] || dummy_token).type == 'num') {
+            console.log("evaluating "+code[pointer].value+" - "+code[pointer + 2].value+" equals:" )
+            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) - parseFloat(code[pointer + 2].value) })
+            functions = true
+            console.log(code[pointer].value)  
+          }
+        }
+        else if (code[pointer + 1].value == '%') {
+          [code] = interpret(code, pointer + 2, localState)
+          console.log(code[pointer].value)
+          if ((code[pointer + 2] || dummy_token).type == 'num') {
+            console.log("evaluating "+code[pointer].value+" % "+code[pointer + 2].value+" equals:" )
+            code.splice(pointer, 3, { type: 'num', value: parseFloat(code[pointer].value) % parseFloat(code[pointer + 2].value) })
+            functions = true
+            console.log(code[pointer].value)  
+          }
+        }
+      }
     } else if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
           let [tmp] = interpret(code, pointer + 2, localState)
           code = tmp
-          localState[code[pointer].value] = code[pointer+2]
+          localState[code[pointer].value] = code[pointer + 2]
           code.splice(pointer, 3)
           functions = true
         }
       }
-      if (!functions) {code.splice(pointer, 1, localState[code[pointer].value] || dummy_token); functions=true}
-    // MARK: expressions
-    40
+      if (!functions) { code.splice(pointer, 1, localState[code[pointer].value] || dummy_token); functions = true }
+      // MARK: expressions
+      40
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
       let [tmp] = interpret(code[pointer].value, 0, localState)
       code[pointer] = tmp[0] || dummy_token
+      functions = true
     }
     if (!functions) {
       if (exec) { pointer++ } else { return [code, localState, pointer] }
