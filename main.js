@@ -178,7 +178,7 @@ function interpret(code, pointer, state, exec = false) {
             console.log(code[pointer].value)
             if ((code[pointer + 2] || dummy_token).type == func.match.b) {
               console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
-              code.splice(pointer, 3, { type: func.type, value: func.exec(parseFloat(code[pointer].value), parseFloat(code[pointer + 2].value)) })
+              code.splice(pointer, 3, { type: func.type, value: func.exec(code[pointer].value, code[pointer + 2].value) })
               functions = true
               console.log(code[pointer].value)
             }
