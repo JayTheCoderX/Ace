@@ -12,3 +12,6 @@ floattest = (129.6299399 / 8.2525) / 5 "this should evaluate to approximate pi"
 
 x="h"+"e"+l+"o"y=world
 string = x+space+y
+stringmul = x+"o"*5
+
+operationOrder = 1+1*2+20

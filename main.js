@@ -154,7 +154,8 @@ function getType(code, pointer, state) {
   }
 }
 
-function interpret(code, pointer, state, exec = false) {
+function interpret(code, pointer, state, exec = false, traverse=true) {
+  console.log("Traverse: "+traverse)
   console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
   console.log(pointer)
   let localState = state || {}
@@ -163,24 +164,29 @@ function interpret(code, pointer, state, exec = false) {
     functions = false
     // MARK: type handling
     let pf = parseFloat
-    if ((code[pointer + 1] || dummy_token).type == "operator") {
+    if (((code[pointer + 1] || dummy_token).type == "operator") && traverse) {
       [
         { match: { a: 'string', b: 'string' }, op: '+', 'exec': (a, b) => a + b, type: 'string' },
+        { match: { a: 'num', b: 'string' }, op: '*', 'exec': (a, b) => b.repeat(pf(a)), type: 'string' },
+        { match: { a: 'string', b: 'num' }, op: '*', 'exec': (a, b) => a.repeat(pf(b)), type: 'string' },
+        { match: { a: 'num', b: 'string' }, op: '+', 'exec': (a, b) => a+b, type: 'string' },
+        { match: { a: 'string', b: 'num' }, op: '+', 'exec': (a, b) => a+b, type: 'string' },
         { match: { a: 'num', b: 'num' }, 'op': '+', 'exec': (a, b) => pf(a) + pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '*', 'exec': (a, b) => pf(a) * pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '/', 'exec': (a, b) => pf(a) / pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '%', 'exec': (a, b) => pf(a) % pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '^', 'exec': (a, b) => pf(a) ^ pf(b), type: 'num' },
-      ].forEach(func => {
+      ].some(func => {
         if (code[pointer].type == func.match.a && code[pointer+1]) {
           if (code[pointer + 1].value == func.op) {
-            [code] = interpret(code, pointer + 2, localState)
+            if (traverse || ['expression', 'object'].includes(code[pointer+2].type)) {[code] = interpret(code, pointer + 2, localState, traverse=false)}
             console.log(code[pointer].value)
             if ((code[pointer + 2] || dummy_token).type == func.match.b) {
               console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
               code.splice(pointer, 3, { type: func.type, value: func.exec(code[pointer].value, code[pointer + 2].value) })
               functions = true
               console.log(code[pointer].value)
+              return true
             }
           }
         }
