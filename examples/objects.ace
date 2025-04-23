@@ -14,4 +14,4 @@ x="h"+"e"+l+"o"y=world
 string = x+space+y
 stringmul = x+"o"*5
 
-operationOrder = 1+1*2+20
+operationOrder = 2*2+4*4+5

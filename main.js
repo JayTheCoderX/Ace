@@ -166,20 +166,20 @@ function interpret(code, pointer, state, exec = false, traverse=true) {
     let pf = parseFloat
     if (((code[pointer + 1] || dummy_token).type == "operator") && traverse) {
       [
-        { match: { a: 'string', b: 'string' }, op: '+', 'exec': (a, b) => a + b, type: 'string' },
-        { match: { a: 'num', b: 'string' }, op: '*', 'exec': (a, b) => b.repeat(pf(a)), type: 'string' },
-        { match: { a: 'string', b: 'num' }, op: '*', 'exec': (a, b) => a.repeat(pf(b)), type: 'string' },
-        { match: { a: 'num', b: 'string' }, op: '+', 'exec': (a, b) => a+b, type: 'string' },
-        { match: { a: 'string', b: 'num' }, op: '+', 'exec': (a, b) => a+b, type: 'string' },
-        { match: { a: 'num', b: 'num' }, 'op': '+', 'exec': (a, b) => pf(a) + pf(b), type: 'num' },
-        { match: { a: 'num', b: 'num' }, 'op': '*', 'exec': (a, b) => pf(a) * pf(b), type: 'num' },
-        { match: { a: 'num', b: 'num' }, 'op': '/', 'exec': (a, b) => pf(a) / pf(b), type: 'num' },
-        { match: { a: 'num', b: 'num' }, 'op': '%', 'exec': (a, b) => pf(a) % pf(b), type: 'num' },
-        { match: { a: 'num', b: 'num' }, 'op': '^', 'exec': (a, b) => pf(a) ^ pf(b), type: 'num' },
+        { match: { a: 'string', b: 'string' }, op: '+', traverse: true, exec: (a, b) => a + b, type: 'string'},
+        { match: { a: 'num', b: 'string' }, op: '*', traverse: false, exec: (a, b) => b.repeat(pf(a)), type: 'string' },
+        { match: { a: 'string', b: 'num' }, op: '*', traverse: false, exec: (a, b) => a.repeat(pf(b)), type: 'string' },
+        { match: { a: 'num', b: 'string' }, op: '+', traverse: true, exec: (a, b) => a+b, type: 'string' },
+        { match: { a: 'string', b: 'num' }, op: '+', traverse: true, exec: (a, b) => a+b, type: 'string' },
+        { match: { a: 'num', b: 'num' }, 'op': '+', traverse: true, exec: (a, b) => pf(a) + pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '*', traverse: false, exec: (a, b) => pf(a) * pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '/', traverse: false, exec: (a, b) => pf(a) / pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '%', traverse: false, exec: (a, b) => pf(a) % pf(b), type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '^', traverse: false, exec: (a, b) => pf(a) ^ pf(b), type: 'num' },
       ].some(func => {
         if (code[pointer].type == func.match.a && code[pointer+1]) {
           if (code[pointer + 1].value == func.op) {
-            if (traverse || ['expression', 'object'].includes(code[pointer+2].type)) {[code] = interpret(code, pointer + 2, localState, traverse=false)}
+            if (traverse || ['expression', 'object'].includes(code[pointer+2].type)) {[code] = interpret(code, pointer + 2, localState, false, func.traverse)}
             console.log(code[pointer].value)
             if ((code[pointer + 2] || dummy_token).type == func.match.b) {
               console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
@@ -207,7 +207,7 @@ function interpret(code, pointer, state, exec = false, traverse=true) {
       40
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
-      let [tmp] = interpret(code[pointer].value, 0, localState)
+      let [tmp] = interpret(code[pointer].value, 0, localState, true)
       code[pointer] = tmp[0] || dummy_token
       functions = true
     }
