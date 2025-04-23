@@ -157,9 +157,9 @@ function getType(code, pointer, state) {
   }
 }
 
-function deepCopy(object){
-  const deepCopyStructured = structuredClone(object);
-  return deepCopyStructured
+function dcopy(object){
+  const dcopyStructured = structuredClone(object);
+  return dcopyStructured
 }
 
 function interpret(code, pointer, state, exec = false, traverse = true) {
@@ -190,7 +190,7 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
       ].some(func => {
         if (code[pointer].type == func.match.a && code[pointer + 1]) {
           if (code[pointer + 1].value == func.op) {
-            if (traverse || ['expression', 'object'].includes(code[pointer + 2].type)) { [code, localState] = interpret(deepCopy(code), pointer + 2, deepCopy(localState), false, func.traverse) }
+            if (traverse || ['expression', 'object'].includes(code[pointer + 2].type)) { [code, localState] = interpret(dcopy(code), pointer + 2, dcopy(localState), false, func.traverse) }
             console.log(code[pointer].value)
             if ((code[pointer + 2] || dummy_token).type == func.match.b) {
               console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
@@ -206,7 +206,7 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
     if (code[pointer].type == "object" && !functions) {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
-          [tmp, localState] = interpret(deepCopy(code), pointer + 2, deepCopy(localState), false, true)
+          [tmp, localState] = interpret(dcopy(code), pointer + 2, dcopy(localState), false, true)
           code = tmp
           console.log("setting " + code[pointer].value + " to " + JSON.stringify(code[pointer + 2], null, 2))
           localState[code[pointer].value] = code[pointer + 2]
@@ -220,14 +220,14 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
         }
       }
       if (!functions) {
-        code.splice(pointer, 1,  deepCopy(localState)[code[pointer].value] || dummy_token)
+        code.splice(pointer, 1,  dcopy(localState)[code[pointer].value] || dummy_token)
         functions = true
       }
       // MARK: expressions
       40
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression" && !functions) {
-      [tmp, localState] = interpret(deepCopy(code)[pointer].value, 0, deepCopy(localState), true, true)
+      [tmp, localState] = interpret(dcopy(code)[pointer].value, 0, dcopy(localState), true, true)
       console.log("Calling with:")
       console.log(code[pointer].value)
       code[pointer] = tmp[0] || dummy_token
