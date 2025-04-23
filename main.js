@@ -11,9 +11,11 @@ const operators = [
   "%",
   "=",
   "^",
+  "$",
   ">",
   "<",
   ",",
+  "$=",
   ";",
   "\n",
   "+=",
@@ -23,6 +25,7 @@ const operators = [
   "+=",
   "-=",
   "/=",
+  "==",
   "--"
 ]
 
@@ -34,7 +37,7 @@ const dummy_token = { type: 'nil', value: 'nil' }
 //const parsed = parse("cheese=value*2+cheese(5,bungle),(functions,(more_functions, functions)),(test),(test)")
 
 try {
-  const data = fs.readFileSync('./examples/objects.ace', 'utf8');
+  const data = fs.readFileSync('./examples/functions.ace', 'utf8');
   console.log(data);
   const parsed = parse(data);
   console.log("PrettyPrint INIT: " + JSON.stringify(parsed, null, 2))
@@ -154,8 +157,9 @@ function getType(code, pointer, state) {
   }
 }
 
-function interpret(code, pointer, state, exec = false, traverse=true) {
-  console.log("Traverse: "+traverse)
+function interpret(code, pointer, state, exec = false, traverse = true) {
+  console.log("Traverse: " + traverse)
+  console.log("Execute: " + exec)
   console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
   console.log(pointer)
   let localState = state || {}
@@ -166,27 +170,28 @@ function interpret(code, pointer, state, exec = false, traverse=true) {
     let pf = parseFloat
     if (((code[pointer + 1] || dummy_token).type == "operator") && traverse) {
       [
-        { match: { a: 'string', b: 'string' }, op: '+', traverse: true, exec: (a, b) => a + b, type: 'string'},
+        { match: { a: 'string', b: 'string' }, op: '+', traverse: true, exec: (a, b) => a + b, type: 'string' },
         { match: { a: 'num', b: 'string' }, op: '*', traverse: false, exec: (a, b) => b.repeat(pf(a)), type: 'string' },
         { match: { a: 'string', b: 'num' }, op: '*', traverse: false, exec: (a, b) => a.repeat(pf(b)), type: 'string' },
-        { match: { a: 'num', b: 'string' }, op: '+', traverse: true, exec: (a, b) => a+b, type: 'string' },
-        { match: { a: 'string', b: 'num' }, op: '+', traverse: true, exec: (a, b) => a+b, type: 'string' },
+        { match: { a: 'num', b: 'string' }, op: '+', traverse: true, exec: (a, b) => a + b, type: 'string' },
+        { match: { a: 'string', b: 'num' }, op: '+', traverse: true, exec: (a, b) => a + b, type: 'string' },
         { match: { a: 'num', b: 'num' }, 'op': '+', traverse: true, exec: (a, b) => pf(a) + pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '*', traverse: false, exec: (a, b) => pf(a) * pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '/', traverse: false, exec: (a, b) => pf(a) / pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '%', traverse: false, exec: (a, b) => pf(a) % pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '^', traverse: false, exec: (a, b) => pf(a) ^ pf(b), type: 'num' },
+        { match: { a: 'static', b: 'block' }, 'op': '*', traverse: false, exec: (a, b) => a }
       ].some(func => {
-        if (code[pointer].type == func.match.a && code[pointer+1]) {
+        if (code[pointer].type == func.match.a && code[pointer + 1]) {
           if (code[pointer + 1].value == func.op) {
-            if (traverse || ['expression', 'object'].includes(code[pointer+2].type)) {[code] = interpret(code, pointer + 2, localState, false, func.traverse)}
+            if (traverse || ['expression', 'object'].includes(code[pointer + 2].type)) { [code, localState] = interpret(code, pointer + 2, localState, false, func.traverse) }
             console.log(code[pointer].value)
             if ((code[pointer + 2] || dummy_token).type == func.match.b) {
               console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
               code.splice(pointer, 3, { type: func.type, value: func.exec(code[pointer].value, code[pointer + 2].value) })
               functions = true
               console.log(code[pointer].value)
-              return true
+              //return true
             }
           }
         }
@@ -195,19 +200,32 @@ function interpret(code, pointer, state, exec = false, traverse=true) {
     if (code[pointer].type == "object") {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
-          let [tmp] = interpret(code, pointer + 2, localState)
+          [tmp, localState] = interpret(code, pointer + 2, localState)
           code = tmp
+          console.log("setting " + code[pointer].value + " to " + JSON.stringify(code[pointer + 2], null, 2))
+          localState[code[pointer].value] = code[pointer + 2]
+          code.splice(pointer, 3)
+          functions = true
+        } else if (code[pointer + 1].value == "$=") {
+          console.log(code[pointer + 2])
           localState[code[pointer].value] = code[pointer + 2]
           code.splice(pointer, 3)
           functions = true
         }
       }
-      if (!functions) { code.splice(pointer, 1, localState[code[pointer].value] || dummy_token); functions = true }
+      if (!functions) {
+        code.splice(pointer, 1, { ...localState[code[pointer].value] } || dummy_token)
+        functions = true
+      }
       // MARK: expressions
       40
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if (code[pointer].type == "expression") {
-      let [tmp] = interpret(code[pointer].value, 0, localState, true)
+      [tmp, localState] = interpret({...code[pointer].value}, 0, localState, true, true)
+      code[pointer] = tmp[0] || dummy_token
+      functions = true
+    } else if (code[pointer].type == "block") {
+      let [tmp, localState] = interpret({...code[pointer].value}, 0, localState, true, true)
       code[pointer] = tmp[0] || dummy_token
       functions = true
     }

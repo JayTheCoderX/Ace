@@ -1,0 +1,4 @@
+cube $= (x*x*x)
+
+x = 1 y=cube
+x = 2 z=cube
