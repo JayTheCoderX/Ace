@@ -42,7 +42,7 @@ try {
   const parsed = parse(data);
   console.log("PrettyPrint INIT: " + JSON.stringify(parsed, null, 2))
   console.log(JSON.stringify(parsed, null, 2))
-  const [code, state, output] = interpret(parsed, 0, {}, exec = true)
+  const [code, state, output] = interpret(parsed, 0, {}, true, true)
   console.log("=== EXECUTION FINISHED ===")
   console.log("PrettyPrint code block state: " + JSON.stringify(code, null, 2))
   console.log("PrettyPrint global state: " + JSON.stringify(state, null, 2))
@@ -157,10 +157,16 @@ function getType(code, pointer, state) {
   }
 }
 
+function deepCopy(object){
+  const deepCopyStructured = structuredClone(object);
+  return deepCopyStructured
+}
+
 function interpret(code, pointer, state, exec = false, traverse = true) {
   console.log("Traverse: " + traverse)
   console.log("Execute: " + exec)
-  console.log("PrettyPrint State: " + JSON.stringify(code, null, 2))
+  console.log("I'm getting some code here:")
+  console.log(JSON.stringify(code, null, 2))
   console.log(pointer)
   let localState = state || {}
   let functions = false
@@ -184,23 +190,23 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
       ].some(func => {
         if (code[pointer].type == func.match.a && code[pointer + 1]) {
           if (code[pointer + 1].value == func.op) {
-            if (traverse || ['expression', 'object'].includes(code[pointer + 2].type)) { [code, localState] = interpret(code, pointer + 2, localState, false, func.traverse) }
+            if (traverse || ['expression', 'object'].includes(code[pointer + 2].type)) { [code, localState] = interpret(deepCopy(code), pointer + 2, deepCopy(localState), false, func.traverse) }
             console.log(code[pointer].value)
             if ((code[pointer + 2] || dummy_token).type == func.match.b) {
               console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
               code.splice(pointer, 3, { type: func.type, value: func.exec(code[pointer].value, code[pointer + 2].value) })
               functions = true
               console.log(code[pointer].value)
-              //return true
+              return true
             }
           }
         }
       })
     }
-    if (code[pointer].type == "object") {
+    if (code[pointer].type == "object" && !functions) {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
-          [tmp, localState] = interpret(code, pointer + 2, localState)
+          [tmp, localState] = interpret(deepCopy(code), pointer + 2, deepCopy(localState), false, true)
           code = tmp
           console.log("setting " + code[pointer].value + " to " + JSON.stringify(code[pointer + 2], null, 2))
           localState[code[pointer].value] = code[pointer + 2]
@@ -214,23 +220,25 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
         }
       }
       if (!functions) {
-        code.splice(pointer, 1, { ...localState[code[pointer].value] } || dummy_token)
+        code.splice(pointer, 1,  deepCopy(localState)[code[pointer].value] || dummy_token)
         functions = true
       }
       // MARK: expressions
       40
       //if (['+='].includes(code[pointer + 1].value)) {}
-    } else if (code[pointer].type == "expression") {
-      [tmp, localState] = interpret({...code[pointer].value}, 0, localState, true, true)
+    } else if (code[pointer].type == "expression" && !functions) {
+      [tmp, localState] = interpret(deepCopy(code)[pointer].value, 0, deepCopy(localState), true, true)
+      console.log("Calling with:")
+      console.log(code[pointer].value)
       code[pointer] = tmp[0] || dummy_token
       functions = true
-    } else if (code[pointer].type == "block") {
-      let [tmp, localState] = interpret({...code[pointer].value}, 0, localState, true, true)
+    } else if (code[pointer].type == "block" && false) {
+      let [tmp, localState] = interpret({ ...code[pointer].value }, 0, localState, true, true)
       code[pointer] = tmp[0] || dummy_token
       functions = true
     }
     if (!functions) {
-      if (exec) { pointer++ } else { return [code, localState, pointer] }
+      if (exec) { pointer++ } else { console.log('Function ended so returning '+JSON.stringify([code, localState, pointer], null, 2)); return [code, localState, pointer] }
     }
   }
   return [code, localState, pointer]
