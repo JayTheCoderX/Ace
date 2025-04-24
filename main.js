@@ -163,25 +163,27 @@ function dcopy(object){
   return dcopyStructured
 }
 
-function interpret(code, pointer, state, exec = false, traverse = true) {
+function interpret(code, ptr, state, exec = false, traverse = true) {
+  let pf = parseFloat
   console.log("Traverse: " + traverse)
   console.log("Execute: " + exec)
   console.log("I'm getting some code here:")
   console.log(JSON.stringify(code, null, 2))
-  console.log(pointer)
+  console.log(ptr)
   let localState = state || {}
   let functions = false
   let tmp = null
+  let pointer = pf(ptr)
   while (pointer < code.length) {
     functions = false
     // MARK: type handling
-    let pf = parseFloat
     if ((code[pointer] || dummy_token).type == "operator") {
-      if (code[pointer].value == ">>")
+      if (code[pointer].value == ">>") {
         [tmp, localState] = interpret(dcopy(code), pointer + 1, dcopy(localState), false, true)
         code = tmp
         console.log((code[pointer+1]||dummy_token).value)
         code.splice(pointer, 2)
+      }
     }
     if (((code[pointer + 1] || dummy_token).type == "operator") && traverse) {
       [
@@ -195,12 +197,12 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
         { match: { a: 'num', b: 'num' }, 'op': '/', traverse: false, exec: (a, b) => pf(a) / pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '%', traverse: false, exec: (a, b) => pf(a) % pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '^', traverse: false, exec: (a, b) => pf(a) ^ pf(b), type: 'num' },
-        { match: { a: 'num', b: 'num' }, 'op': '^', traverse: false, exec: (a, b) => (pf(a) == pf(b))?1:0, type: 'num' },
-        { match: { a: 'num', b: 'block'}, 'op': '*', traverse: false, exec: (a, b) => {i=0; while (i<pf(a)) {
-          let mb = b.map((z) => z)
-          mb.splice(1, 0, {type:"operator", value:"="}, {type:"num", value:i})
-          [tmp, 
-            localState] = interpret(mb, 0, dcopy(localState), true, true)
+        { match: { a: 'num', b: 'num' }, 'op': '==', traverse: true, exec: (a, b) => (pf(a) == pf(b))?1:0, type: 'num' },
+        { match: { a: 'num', b: 'block'}, 'op': '*', traverse: false, exec: (a, b) => {i=0; while (i<=pf(a)) {
+          let mb = b.map((z) => z);
+          mb.splice(1, 0, {type:"operator", value:"="}, {type:"num", value:i});
+          [tmp, localState] = interpret(mb, 0, dcopy(localState), true, true);
+          i++
         }; return 1}, type: 'num' },
         //{ match: { a: 'static', b: 'block' }, 'op': '*', traverse: false, exec: (a, b) => a }
       ].some(func => {
@@ -222,8 +224,10 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
     }
     if (!code[pointer]) {
       console.log(code)
+      console.log(pointer)
+      console.log("%%%")
     }
-    if (code[pointer].type == "object" && !functions) {
+    if ((code[pointer] || dummy_token).type == "object" && !functions) {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
           [tmp, localState] = interpret(dcopy(code), pointer + 2, dcopy(localState), false, true)
@@ -246,13 +250,13 @@ function interpret(code, pointer, state, exec = false, traverse = true) {
       // MARK: expressions
       40
       //if (['+='].includes(code[pointer + 1].value)) {}
-    } else if (code[pointer].type == "expression" && !functions) {
+    } else if ((code[pointer] || dummy_token).type == "expression" && !functions) {
       [tmp, localState] = interpret(dcopy(code)[pointer].value, 0, dcopy(localState), true, true)
       console.log("Calling with:")
       console.log(code[pointer].value)
       code[pointer] = tmp[0] || dummy_token
       functions = true
-    } else if (code[pointer].type == "block" && false) {
+    } else if ((code[pointer] || dummy_token).type == "block" && false) {
       let [tmp, localState] = interpret({ ...code[pointer].value }, 0, localState, true, true)
       code[pointer] = tmp[0] || dummy_token
       functions = true
