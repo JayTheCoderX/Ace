@@ -43,6 +43,7 @@ try {
   const parsed = parse(data);
   console.log("PrettyPrint INIT: " + JSON.stringify(parsed, null, 2))
   console.log(JSON.stringify(parsed, null, 2))
+  console.log("===  EXECUTION  START  ===")
   const [code, state, output] = interpret(parsed, 0, {}, true, true)
   console.log("=== EXECUTION FINISHED ===")
   console.log("PrettyPrint code block state: " + JSON.stringify(code, null, 2))
@@ -165,11 +166,11 @@ function dcopy(object){
 
 function interpret(code, ptr, state, exec = false, traverse = true) {
   let pf = parseFloat
-  console.log("Traverse: " + traverse)
-  console.log("Execute: " + exec)
-  console.log("I'm getting some code here:")
-  console.log(JSON.stringify(code, null, 2))
-  console.log(ptr)
+  //console.log("Traverse: " + traverse)
+  //console.log("Execute: " + exec)
+  //console.log("I'm getting some code here:")
+  //console.log(JSON.stringify(code, null, 2))
+  //console.log(ptr)
   let localState = state || {}
   let functions = false
   let tmp = null
@@ -198,6 +199,7 @@ function interpret(code, ptr, state, exec = false, traverse = true) {
         { match: { a: 'num', b: 'num' }, 'op': '%', traverse: false, exec: (a, b) => pf(a) % pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '^', traverse: false, exec: (a, b) => pf(a) ^ pf(b), type: 'num' },
         { match: { a: 'num', b: 'num' }, 'op': '==', traverse: true, exec: (a, b) => (pf(a) == pf(b))?1:0, type: 'num' },
+        { match: { a: 'num', b: 'num' }, 'op': '!=', traverse: true, exec: (a, b) => (pf(a) != pf(b))?1:0, type: 'num' },
         { match: { a: 'num', b: 'block'}, 'op': '*', traverse: false, exec: (a, b) => {i=0; while (i<=pf(a)) {
           let mb = b.map((z) => z);
           mb.splice(1, 0, {type:"operator", value:"="}, {type:"num", value:i});
@@ -209,13 +211,14 @@ function interpret(code, ptr, state, exec = false, traverse = true) {
         if (code[pointer].type == func.match.a && code[pointer + 1]) {
           if (code[pointer + 1].value == func.op) {
             if (traverse || ['expression', 'object'].includes(code[pointer + 2].type)) { [code, localState] = interpret(dcopy(code), pointer + 2, dcopy(localState), false, func.traverse) }
-            console.log(code[pointer].value)
+            //console.log(code[pointer].value)
             if ((code[pointer + 2] || dummy_token).type == func.match.b) {
-              console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
+              //console.log("evaluating " + code[pointer].value + ` ${func.op} ` + code[pointer + 2].value + " equals:")
               code.splice(pointer, 3, { type: func.type, value: func.exec(code[pointer].value, code[pointer + 2].value) })
-              if (!code[pointer]) {console.log("Warn! This returned nil, blanking value"); code.splice(pointer,1,{type:"num", value:'0'})}
+              if (!code[pointer]) {//console.log("Warn! This returned nil, blanking value");
+              code.splice(pointer,1,{type:"num", value:'0'})}
               functions = true
-              console.log(code[pointer].value)
+              //console.log(code[pointer].value)
               return true
             }
           }
@@ -223,21 +226,21 @@ function interpret(code, ptr, state, exec = false, traverse = true) {
       })
     }
     if (!code[pointer]) {
-      console.log(code)
-      console.log(pointer)
-      console.log("%%%")
+      //console.log(code)
+      //console.log(pointer)
+      //console.log("%%%")
     }
     if ((code[pointer] || dummy_token).type == "object" && !functions) {
       if ((code[pointer + 1] || dummy_token).type == "operator") {
         if (code[pointer + 1].value == "=") {
           [tmp, localState] = interpret(dcopy(code), pointer + 2, dcopy(localState), false, true)
           code = tmp
-          console.log("setting " + code[pointer].value + " to " + JSON.stringify(code[pointer + 2], null, 2))
+          //console.log("setting " + code[pointer].value + " to " + JSON.stringify(code[pointer + 2], null, 2))
           localState[code[pointer].value] = code[pointer + 2]
           code.splice(pointer, 3)
           functions = true
         } else if (code[pointer + 1].value == "$=") {
-          console.log(code[pointer + 2])
+          //console.log(code[pointer + 2])
           localState[code[pointer].value] = code[pointer + 2]
           code.splice(pointer, 3)
           functions = true
@@ -252,8 +255,8 @@ function interpret(code, ptr, state, exec = false, traverse = true) {
       //if (['+='].includes(code[pointer + 1].value)) {}
     } else if ((code[pointer] || dummy_token).type == "expression" && !functions) {
       [tmp, localState] = interpret(dcopy(code)[pointer].value, 0, dcopy(localState), true, true)
-      console.log("Calling with:")
-      console.log(code[pointer].value)
+      //console.log("Calling with:")
+      //console.log(code[pointer].value)
       code[pointer] = tmp[0] || dummy_token
       functions = true
     } else if ((code[pointer] || dummy_token).type == "block" && false) {
@@ -262,7 +265,10 @@ function interpret(code, ptr, state, exec = false, traverse = true) {
       functions = true
     }
     if (!functions) {
-      if (exec) { pointer++ } else { console.log('Function ended so returning '+JSON.stringify([code, localState, pointer], null, 2)); return [code, localState, pointer] }
+      if (exec) { pointer++ } else {
+        //console.log('Function ended so returning '+JSON.stringify([code, localState, pointer], null, 2));
+        return [code, localState, pointer]
+      }
     }
   }
   return [code, localState, pointer]
