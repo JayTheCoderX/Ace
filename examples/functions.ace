@@ -1,4 +1,1 @@
-cube $= (x*x*x)
-
-x = 1 y=cube
-x = 2 z=cube
+100*{i;>>"Fizz"*i%3==0+"Buzz"*i%5==0+(i+"")*i%15==0}
